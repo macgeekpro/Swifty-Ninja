@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-func RandomInt(min min: Int, max: Int) -> Int {
+func RandomInt(min: Int, max: Int) -> Int {
 	if max < min { return min }
 	return Int(arc4random_uniform(UInt32((max - min) + 1))) + min
 }

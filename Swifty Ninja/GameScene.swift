@@ -22,6 +22,8 @@ class GameScene: SKScene {
     var activeSliceFG: SKShapeNode!
     var activeSlicePoints = [CGPoint]()
     
+    var swooshSoundActive = false
+    
     // MARK: - Property Observers
     
     var score: Int = 0 {
@@ -79,6 +81,11 @@ class GameScene: SKScene {
         
         self.activeSlicePoints.append(location)
         self.redrawActiveSlice()
+        
+        guard self.swooshSoundActive else {
+            self.playSwooshSound()
+            return
+        }
     }
    
     override func update(currentTime: CFTimeInterval) {
@@ -118,6 +125,20 @@ class GameScene: SKScene {
         
         self.addChild(self.activeSliceBG)
         self.addChild(self.activeSliceFG)
+    }
+    
+    func playSwooshSound() {
+        self.swooshSoundActive = true
+        
+        let randomNumber = RandomInt(1, max: 3)
+        let soundName = "swoosh\(randomNumber).caf"
+        let swooshSoundAction = SKAction.playSoundFileNamed(soundName, waitForCompletion: true)
+        
+        self.runAction(swooshSoundAction) { [unowned self] () -> Void in
+            self.swooshSoundActive = false
+        }
+        
+        
     }
     
     func redrawActiveSlice() {
