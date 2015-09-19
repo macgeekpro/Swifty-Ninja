@@ -20,6 +20,7 @@ class GameScene: SKScene {
     
     var activeSliceBG: SKShapeNode!
     var activeSliceFG: SKShapeNode!
+    var activeSlicePoints = [CGPoint]()
     
     // MARK: - Property Observers
     
@@ -39,14 +40,45 @@ class GameScene: SKScene {
         
         self.physicsWorld.gravity = CGVectorMake(0, -6)
         self.physicsWorld.speed = 0.85
-        
+
         self.createScore()
         self.createLives()
         self.createSlices()
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-
+        super.touchesBegan(touches, withEvent: event)
+        
+        self.activeSlicePoints.removeAll(keepCapacity: true)
+        
+        let touch = touches.first!
+        let location = touch.locationInNode(self)
+        self.activeSlicePoints.append(location)
+        
+        self.redrawActiveSlice()
+        
+        self.activeSliceBG.removeAllActions()
+        self.activeSliceFG.removeAllActions()
+        
+        self.activeSliceBG.alpha = 1.0
+        self.activeSliceFG.alpha = 1.0
+    }
+    
+    override func touchesCancelled(touches: Set<UITouch>?, withEvent event: UIEvent?) {
+        self.touchesEnded(touches!, withEvent: event!)
+    }
+    
+    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        self.activeSliceBG.runAction(SKAction.fadeOutWithDuration(0.25))
+        self.activeSliceFG.runAction(SKAction.fadeOutWithDuration(0.25))
+    }
+    
+    override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        let touch = touches.first!
+        let location = touch.locationInNode(self)
+        
+        self.activeSlicePoints.append(location)
+        self.redrawActiveSlice()
     }
    
     override func update(currentTime: CFTimeInterval) {
@@ -86,5 +118,25 @@ class GameScene: SKScene {
         
         self.addChild(self.activeSliceBG)
         self.addChild(self.activeSliceFG)
+    }
+    
+    func redrawActiveSlice() {
+        guard activeSlicePoints.count >= 2 else {
+            self.activeSliceBG.path = nil
+            self.activeSliceFG.path = nil
+            return
+        }
+        
+        while self.activeSlicePoints.count > 12 { self.activeSlicePoints.removeAtIndex(0) }
+        
+        let bezierPath = UIBezierPath()
+        bezierPath.moveToPoint(self.activeSlicePoints.first! as CGPoint)
+        
+        for index in 1 ..< self.activeSlicePoints.count {
+            bezierPath.addLineToPoint(self.activeSlicePoints[index])
+        }
+        
+        self.activeSliceBG.path = bezierPath.CGPath
+        self.activeSliceFG.path = bezierPath.CGPath
     }
 }
