@@ -8,6 +8,12 @@
 
 import SpriteKit
 
+enum ForceBomb {
+    case Never
+    case Always
+    case Default
+}
+
 class GameScene: SKScene {
     
     // MARK: - Stored Properties
@@ -15,6 +21,7 @@ class GameScene: SKScene {
     var gameScore: SKLabelNode!
 
     var livesImages = [SKSpriteNode]()
+    var activeEnemies = [SKSpriteNode]()
 
     var remainingLives = 3
     
@@ -112,6 +119,34 @@ class GameScene: SKScene {
         }
     }
     
+    func createEnemy(forceBomb: ForceBomb = .Default) {
+        let enemy: SKSpriteNode
+        
+        var enemyType = RandomInt(0, max: 6)
+        
+        if forceBomb == ForceBomb.Never {
+            enemyType = 1
+        }
+        else if forceBomb == ForceBomb.Always {
+            enemyType = 0
+        }
+        
+        if enemyType == 0 {
+            // bomb code goes here
+        }
+        else {
+            enemy = SKSpriteNode(imageNamed: "penguin")
+            self.runAction(SKAction.playSoundFileNamed("launch.caf", waitForCompletion: false))
+            enemy.name = "enemy"
+        }
+        
+        // position code goes here
+        
+        self.addChild(enemy)
+        self.activeEnemies.append(enemy)
+        
+    }
+    
     func createSlices() {
         self.activeSliceBG = SKShapeNode()
         self.activeSliceBG.zPosition = 2
@@ -137,8 +172,6 @@ class GameScene: SKScene {
         self.runAction(swooshSoundAction) { [unowned self] () -> Void in
             self.swooshSoundActive = false
         }
-        
-        
     }
     
     func redrawActiveSlice() {
