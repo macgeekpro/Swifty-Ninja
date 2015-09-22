@@ -9,6 +9,10 @@
 import SpriteKit
 import AVFoundation
 
+enum SequenceType: Int {
+    case OneNoBomb, One, TwoWithOneBomb, Two, Three, Four, Chain, FastChain
+}
+
 enum ForceBomb {
     case Never
     case Always
@@ -33,6 +37,12 @@ class GameScene: SKScene {
     var swooshSoundActive = false
     var bombSoundEffect: AVAudioPlayer!
     
+    var popupTimeBetweenSpawn = 0.9
+    var sequenceOfEnemiesToCreate: [SequenceType]!
+    var sequencePositionCurrently = 0
+    var delayToCreateChainedEnemies = 3.0
+    var nextSequenceQueued = true
+    
     // MARK: - Property Observers
     
     var score: Int = 0 {
@@ -55,6 +65,17 @@ class GameScene: SKScene {
         self.createScore()
         self.createLives()
         self.createSlices()
+        
+        self.sequenceOfEnemiesToCreate = [SequenceType.OneNoBomb, .OneNoBomb, .TwoWithOneBomb, .TwoWithOneBomb, .Three, .One, .Chain]
+        
+        for _ in 0 ... 1000 {
+            let nextSequence = SequenceType(rawValue: RandomInt(2, max: 7))!
+            self.sequenceOfEnemiesToCreate.append(nextSequence)
+        }
+        
+        runAfterDelay(2) { [unowned self] () -> Void in
+            self.tossEnemies()
+        }
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
@@ -114,6 +135,26 @@ class GameScene: SKScene {
             if self.bombSoundEffect != nil {
                 self.bombSoundEffect.stop()
                 self.bombSoundEffect = nil
+            }
+        }
+        
+        if self.activeEnemies.count > 0 {
+            for spriteNode in self.activeEnemies {
+                if spriteNode.position.y < -140 {
+                    spriteNode.removeFromParent()
+                    
+                    if let index = self.activeEnemies.indexOf(spriteNode) {
+                        self.activeEnemies.removeAtIndex(index)
+                    }
+                }
+            }
+        }
+        else {
+            if !nextSequenceQueued {
+                runAfterDelay(self.popupTimeBetweenSpawn, block: { [unowned self] () -> Void in
+                    self.tossEnemies()
+                })
+            self.nextSequenceQueued = true
             }
         }
     }
@@ -248,5 +289,64 @@ class GameScene: SKScene {
         
         self.activeSliceBG.path = bezierPath.CGPath
         self.activeSliceFG.path = bezierPath.CGPath
+    }
+    
+    func tossEnemies() {
+        self.popupTimeBetweenSpawn *= 0.991
+        self.delayToCreateChainedEnemies *= 0.99
+        self.physicsWorld.speed *= 1.02
+        
+        let sequenceType = self.sequenceOfEnemiesToCreate[self.sequencePositionCurrently]
+        switch sequenceType {
+            case .OneNoBomb:
+                self.createEnemy(.Never)
+            case .One:
+                self.createEnemy()
+            case .TwoWithOneBomb:
+                self.createEnemy(.Never)
+                self.createEnemy(.Always)
+            case .Two:
+                self.createEnemy()
+                self.createEnemy()
+            case .Three:
+                self.createEnemy()
+                self.createEnemy()
+                self.createEnemy()
+            case .Four:
+                self.createEnemy()
+                self.createEnemy()
+                self.createEnemy()
+                self.createEnemy()
+            case .Chain:
+                self.createEnemy()
+                runAfterDelay(self.delayToCreateChainedEnemies / 5.0, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+                runAfterDelay(self.delayToCreateChainedEnemies / 5.0 * 2, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+                runAfterDelay(self.delayToCreateChainedEnemies / 5.0 * 3, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+                runAfterDelay(self.delayToCreateChainedEnemies / 5.0 * 4, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+            case .FastChain:
+                self.createEnemy()
+                runAfterDelay(self.delayToCreateChainedEnemies / 10.0, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+                runAfterDelay(self.delayToCreateChainedEnemies / 10.0 * 2, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+                runAfterDelay(self.delayToCreateChainedEnemies / 10.0 * 3, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+                runAfterDelay(self.delayToCreateChainedEnemies / 10.0 * 4, block: { [unowned self] () -> Void in
+                    self.createEnemy()
+                })
+        }
+        ++self.sequencePositionCurrently
+        self.nextSequenceQueued = false
     }
 }
