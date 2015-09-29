@@ -132,8 +132,6 @@ class GameScene: SKScene {
             if node.name == "enemy" {
                 // destroy penguin
                 
-//                self.destroyNodes(node: SKNode, incrementScore: Int = 0, soundFile: String,
-                
                 // 1. Create a particle effect over the penguin.
                 let emitterNode = SKEmitterNode(fileNamed: "sliceHitEnemy.sks")!
                 emitterNode.position = node.position
